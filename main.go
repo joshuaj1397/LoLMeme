@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/joshuaj1397/LoLMemes/riotapi"
 )
 
 var tpl *template.Template
@@ -36,23 +38,24 @@ func memed(w http.ResponseWriter, req *http.Request) {
 		fd.SummonerName = req.FormValue("summonerName")
 		fd.ChampionName = req.FormValue("championName")
 	}
-	// s, err := GetSummoner(fd.SummonerName)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	// 	return
-	// }
 
-	err := tpl.ExecuteTemplate(w, "memed.gohtml", fd)
+	// Construct a new Summoner
+	s, err := riotapi.GetSummoner(fd.SummonerName)
 	if err != nil {
 		log.Println(err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	errTemplate := tpl.ExecuteTemplate(w, "memed.gohtml", fd)
+	if errTemplate != nil {
+		log.Println(errTemplate)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 }
 
 func main() {
-	log.Println("Freak Face 3.")
 	http.HandleFunc("/", index)
 	http.HandleFunc("/memed", memed)
 	http.ListenAndServe(":8080", nil)
