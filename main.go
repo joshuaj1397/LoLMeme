@@ -19,10 +19,6 @@ func init() {
 	tpl = template.Must(template.ParseGlob("templates/*.gohtml"))
 }
 
-func init() {
-	tpl = template.Must(template.ParseGlob("templates/*.gohtml"))
-}
-
 func index(w http.ResponseWriter, req *http.Request) {
 	err := tpl.ExecuteTemplate(w, "index.gohtml", nil)
 	if err != nil {
@@ -47,7 +43,7 @@ func memed(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	errTemplate := tpl.ExecuteTemplate(w, "memed.gohtml", fd)
+	errTemplate := tpl.ExecuteTemplate(w, "memed.gohtml", s)
 	if errTemplate != nil {
 		log.Println(errTemplate)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
