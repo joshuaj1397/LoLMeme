@@ -21,7 +21,8 @@ type MatchListDto struct {
 	TotalGames int `json:"totalGames"`
 }
 
-// GetMatchList constructs a new MatchListDto using the AccountID from the SummonerDto
+// GetMatchList constructs a new MatchListDto using the AccountID from the accountID
+// TODO: Make this function configurable
 func GetMatchList(accountID int32) (*MatchListDto, error) {
 	url := fmt.Sprintf("https://na1.api.riotgames.com/lol/match/v3/matchlists/by-account/%d/recent", accountID)
 	var matchList MatchListDto

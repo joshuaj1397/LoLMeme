@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	RIOT_API_KEY string
+	riotAPIKey string
 
 	// Client would instantiate a new http.Client with a 5 sec timeout on requests
 	client = http.Client{
@@ -20,20 +20,21 @@ var (
 
 // Get the RIOT_API_KEY from env vars
 func init() {
-	RIOT_API_KEY = os.Getenv("RIOT_API_KEY")
-	if RIOT_API_KEY == "" {
+	riotAPIKey = os.Getenv("RIOT_API_KEY")
+	if riotAPIKey == "" {
 		panic("RIOT_API_KEY NOT FOUND IN ENV")
 	}
 }
 
 // TODO: Make the URL configurable
+// GetObj converts a JSON object to a struct
 func GetObj(url string, obj interface{}) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
 
-	req.Header.Add("X-Riot-Token", os.Getenv("RIOT_API_KEY"))
+	req.Header.Add("X-Riot-Token", riotAPIKey)
 	fmt.Println(req.Header)
 
 	res, getErr := client.Do(req)
