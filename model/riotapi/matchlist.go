@@ -27,6 +27,5 @@ func GetMatchList(region string, accountID int64) (*MatchListDto, error) {
 	url := fmt.Sprintf("https://%s.api.riotgames.com/lol/match/v3/matchlists/by-account/%d/recent", region, accountID)
 	var matchList MatchListDto
 	err := GetObj(url, &matchList)
-	fmt.Println(matchList)
 	return &matchList, err
 }

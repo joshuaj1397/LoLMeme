@@ -24,6 +24,5 @@ func GetSummoner(region *string, summonerName string) (*SummonerDto, error) {
 		*region = NA
 		return GetSummoner(region, summonerName)
 	}
-	fmt.Println(s)
 	return &s, err
 }

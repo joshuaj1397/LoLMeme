@@ -37,8 +37,8 @@ func (perf *PerformanceDto) setWinLoss(wins, losses int) {
 func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto, error) {
 	var matchList *riotapi.MatchListDto
 	var perf PerformanceDto
-	var totalKDA float64
 	var numOfGames, wins, losses int
+	var totalKDA float64
 
 	s, summonerErr := riotapi.GetSummoner(region, summonerName)
 	if summonerErr != nil {
@@ -70,7 +70,11 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 			if summoner.ParticipantID == participantID {
 
 				// Aggregate the KDA
-				totalKDA += float64(summoner.Stats.Assists+summoner.Stats.Kills) / float64(summoner.Stats.Deaths)
+				if summoner.Stats.Deaths == 0 {
+					totalKDA += float64(summoner.Stats.Assists + summoner.Stats.Kills)
+				} else {
+					totalKDA += float64(summoner.Stats.Assists+summoner.Stats.Kills) / float64(summoner.Stats.Deaths)
+				}
 
 				// Aggreagate the wins and losses
 				if summoner.Stats.Win {
