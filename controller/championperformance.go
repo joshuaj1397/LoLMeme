@@ -1,4 +1,4 @@
-package main
+package controller
 
 import (
 	"github.com/joshuaj1397/LoLMemes/model/riotapi"
@@ -10,9 +10,9 @@ import (
 // All shortcomings are averaged not cumulated so they can be compared to the
 // overall average for a player of the same skill later.
 type PerformanceDto struct {
-	KDA                   float32 // Kill-Death-Assist ratio
-	WinLoss               float32 // Win-Loss ratio
-	WinLossWithPremades   float32 // Win-Loss with a particular premade ratio
+	SummonerName          string  // Summoner Name
+	KDA                   float64 // Kill-Death-Assist ratio
+	WinLoss               float64 // Win-Loss ratio
 	CS                    int32   // Creep Score
 	BossKillsJg           int32   // Neutral Boss kills as a jungler
 	VisionScoreSupp       int32   // Vision Score as a support
@@ -23,35 +23,67 @@ type PerformanceDto struct {
 	BannedButStillClapped bool    // If you constantly ban someone and you're still being clapped by someone else
 }
 
+func (perf *PerformanceDto) setKDA(totalKDA float64, numOfGames int) {
+	perf.KDA = totalKDA / float64(numOfGames)
+}
+
+func (perf *PerformanceDto) setWinLoss(wins, losses int) {
+	perf.WinLoss = float64(wins) / float64(wins+losses)
+}
+
 // TODO: Dry this function
 // GetRecentPerformance gets the last 20 games and calculates the aggregate
 // performance of a summoner
-func GetRecentPerformance(s riotapi.SummonerDto) (*PerformanceDto, error) {
+func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto, error) {
 	var matchList *riotapi.MatchListDto
-	var perf *PerformanceDto
+	var perf PerformanceDto
+	var totalKDA float64
+	var numOfGames, wins, losses int
 
-	matchList, err := riotapi.GetMatchList(s.AccountID)
-	if err != nil {
-		return nil, err
+	s, summonerErr := riotapi.GetSummoner(region, summonerName)
+	if summonerErr != nil {
+		return nil, summonerErr
 	}
 
-	matches := matchList.Matches
-	for i, m := range matches {
-		match, err := riotapi.GetMatchDto(m.GameID)
+	matchList, matchListErr := riotapi.GetMatchList(*region, s.AccountID)
+	if matchListErr != nil {
+		return nil, matchListErr
+	}
+
+	// i is the position of the match, m is the match in the list of matches
+	for i, m := range matchList.Matches {
 		var participantID int
-		if err != nil {
-			return nil, err
+		match, matchErr := riotapi.GetMatch(*region, m.GameID)
+		if matchErr != nil {
+			return nil, matchErr
 		}
 
-		summoners := match.ParticipantIdentities
-		for _, summoner := range summoners {
-
-			// Find the user summoner
+		// Find the summoner's participantID
+		for _, summoner := range match.ParticipantIdentities {
 			if summoner.Player.SummonerName == s.Name {
 				participantID = summoner.ParticipantID
+				break
 			}
 		}
-	}
 
-	return perf, err
+		for _, summoner := range match.Participants {
+			if summoner.ParticipantID == participantID {
+
+				// Aggregate the KDA
+				totalKDA += float64(summoner.Stats.Assists+summoner.Stats.Kills) / float64(summoner.Stats.Deaths)
+
+				// Aggreagate the wins and losses
+				if summoner.Stats.Win {
+					wins++
+				} else {
+					losses++
+				}
+			}
+		}
+		numOfGames = i + 1
+	}
+	perf.SummonerName = s.Name
+	perf.setKDA(totalKDA, numOfGames)
+	perf.setWinLoss(wins, losses)
+	return &perf, nil
 }

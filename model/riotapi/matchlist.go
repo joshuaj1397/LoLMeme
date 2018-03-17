@@ -23,9 +23,10 @@ type MatchListDto struct {
 
 // GetMatchList constructs a new MatchListDto using the AccountID from the accountID
 // TODO: Make this function configurable
-func GetMatchList(accountID int32) (*MatchListDto, error) {
-	url := fmt.Sprintf("https://na1.api.riotgames.com/lol/match/v3/matchlists/by-account/%d/recent", accountID)
+func GetMatchList(region string, accountID int64) (*MatchListDto, error) {
+	url := fmt.Sprintf("https://%s.api.riotgames.com/lol/match/v3/matchlists/by-account/%d/recent", region, accountID)
 	var matchList MatchListDto
 	err := GetObj(url, &matchList)
+	fmt.Println(matchList)
 	return &matchList, err
 }

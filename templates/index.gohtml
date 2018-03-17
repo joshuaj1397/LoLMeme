@@ -3,6 +3,20 @@
 <form action="/memed" method="post">
   <input type="text" name="summonerName" id="summonerName" placeholder="Summoner Name">
   <input type="text" name="championName" id="championName" placeholder="Champion Name">
+  <select name="region" id="region">
+      <option value="NA1" selected>North America</option>
+      <option value="EUNE">Europe Nordic & East</option>
+      <option value="EUW">Europe West</option>
+      <option value="JP">Japan</option>
+      <option value="KR">Korea</option>
+      <option value="BR">Brazil</option>
+      <option value="LAN">Latin America North</option>
+      <option value="LAS">Latin America South</option>
+      <option value="OCE">Oceania</option>
+      <option value="TR">Turkey</option>
+      <option value="RU">Russia</option>
+      <option value="PBE">Public Beta Environment</option>
+  </select>
   <input type="submit" value="Meme me">
 </form>
 {{template "footer"}}

@@ -2,7 +2,6 @@ package riotapi
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -26,7 +25,6 @@ func init() {
 	}
 }
 
-// TODO: Make the URL configurable
 // GetObj converts a JSON object to a struct
 func GetObj(url string, obj interface{}) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -35,18 +33,15 @@ func GetObj(url string, obj interface{}) error {
 	}
 
 	req.Header.Add("X-Riot-Token", riotAPIKey)
-	fmt.Println(req.Header)
 
 	res, getErr := client.Do(req)
 	if getErr != nil {
-		return err
+		return getErr
 	}
-	fmt.Println(res)
 
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
-		return err
+		return readErr
 	}
-
 	return json.Unmarshal(body, &obj)
 }

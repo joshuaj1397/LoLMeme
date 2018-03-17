@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/joshuaj1397/LoLMemes/riotapi"
+	"github.com/joshuaj1397/LoLMemes/controller"
 )
 
 var tpl *template.Template
@@ -13,6 +13,7 @@ var tpl *template.Template
 type formData struct {
 	SummonerName string
 	ChampionName string
+	Region       string
 }
 
 func init() {
@@ -33,17 +34,18 @@ func memed(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost {
 		fd.SummonerName = req.FormValue("summonerName")
 		fd.ChampionName = req.FormValue("championName")
+		fd.Region = req.FormValue("region")
 	}
 
-	// Construct a new Summoner
-	s, err := riotapi.GetSummoner(fd.SummonerName)
+	// Gets the recent performance
+	perf, err := controller.GetRecentPerformance(&fd.Region, fd.SummonerName)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	errTemplate := tpl.ExecuteTemplate(w, "memed.gohtml", s)
+	errTemplate := tpl.ExecuteTemplate(w, "memed.gohtml", perf)
 	if errTemplate != nil {
 		log.Println(errTemplate)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
