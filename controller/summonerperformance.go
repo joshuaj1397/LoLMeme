@@ -13,7 +13,7 @@ type PerformanceDto struct {
 	SummonerName          string  // Summoner Name
 	KDA                   float64 // Kill-Death-Assist ratio
 	WinLoss               float64 // Win-Loss ratio
-	CS                    int32   // Creep Score
+	CS                    int32   // Average Creep Score
 	BossKillsJg           int32   // Neutral Boss kills as a jungler
 	VisionScoreSupp       int32   // Vision Score as a support
 	SelfMitigatedDmgTank  int32   // Self Mitigated Damage as a tank
@@ -37,7 +37,7 @@ func (perf *PerformanceDto) setWinLoss(wins, losses int) {
 func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto, error) {
 	var matchList *riotapi.MatchListDto
 	var perf PerformanceDto
-	var numOfGames, wins, losses int
+	var numOfGames, wins, losses, discardedGames int
 	var totalKDA float64
 
 	s, summonerErr := riotapi.GetSummoner(region, summonerName)
@@ -52,6 +52,16 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 
 	// i is the position of the match, m is the match in the list of matches
 	for i, m := range matchList.Matches {
+
+		// Only get 5v5 Summoners Rift matches
+		switch m.Queue {
+		case riotapi.SUMMONERS_RIFT_BLIND:
+		case riotapi.SUMMONERS_RIFT_DRAFT:
+		case riotapi.SUMMONERS_RIFT_RANKED:
+		default:
+			continue
+		}
+
 		var participantID int
 		match, matchErr := riotapi.GetMatch(*region, m.GameID)
 		if matchErr != nil {
@@ -76,7 +86,7 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 					totalKDA += float64(summoner.Stats.Assists+summoner.Stats.Kills) / float64(summoner.Stats.Deaths)
 				}
 
-				// Aggreagate the wins and losses
+				// Aggregate the wins and losses
 				if summoner.Stats.Win {
 					wins++
 				} else {
@@ -87,7 +97,7 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 		numOfGames = i + 1
 	}
 	perf.SummonerName = s.Name
-	perf.setKDA(totalKDA, numOfGames)
+	perf.setKDA(totalKDA, numOfGames-discardedGames)
 	perf.setWinLoss(wins, losses)
 	return &perf, nil
 }
