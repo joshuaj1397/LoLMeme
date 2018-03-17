@@ -95,10 +95,10 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 				}
 			}
 		}
-		numOfGames = i + 1
+		numOfGames = i + 1 - discardedGames
 	}
 	perf.SummonerName = s.Name
-	perf.setKDA(totalKDA, numOfGames-discardedGames)
+	perf.setKDA(totalKDA, numOfGames)
 	perf.setWinLoss(wins, losses)
 	return &perf, nil
 }
