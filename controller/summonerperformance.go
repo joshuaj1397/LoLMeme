@@ -59,6 +59,7 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 		case riotapi.SUMMONERS_RIFT_DRAFT:
 		case riotapi.SUMMONERS_RIFT_RANKED:
 		default:
+			discardedGames++
 			continue
 		}
 
