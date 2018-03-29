@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"math"
+
 	"github.com/joshuaj1397/LoLMemes/model/riotapi"
 )
 
@@ -10,11 +12,11 @@ import (
 // All shortcomings are averaged not cumulated so they can be compared to the
 // overall average for a player of the same skill later.
 type PerformanceDto struct {
-	SummonerName          string  // Summoner Name
-	KDA                   float64 // Kill-Death-Assist ratio
-	WinLoss               float64 // Win-Loss ratio
+	SummonerName          string  // [x] Summoner Name
+	KDA                   float64 // [x] Kill-Death-Assist ratio
+	WinLoss               float64 // [x] Win-Loss ratio
 	CS                    int32   // Average Creep Score
-	BossKillsJg           int32   // Neutral Boss kills as a jungler
+	BossKillsJg           float64 // Average neutral boss kills as a jg
 	VisionScoreSupp       int32   // Vision Score as a support
 	SelfMitigatedDmgTank  int32   // Self Mitigated Damage as a tank
 	MagicDmgMage          int32   // Magic Damage as a mage
@@ -31,14 +33,22 @@ func (perf *PerformanceDto) setWinLoss(wins, losses int) {
 	perf.WinLoss = float64(wins) / float64(wins+losses)
 }
 
+func (perf *PerformanceDto) setBossKillsDelta(bossKillsDelta float64, numOfGames int) {
+	perf.BossKillsJg = bossKillsDelta / float64(numOfGames)
+}
+
+func calcBossKillDeltas(bossKills, enemyBossKills int) float64 {
+	return math.Abs(float64(bossKills - enemyBossKills))
+}
+
 // TODO: Dry this function
 // GetRecentPerformance gets the last 20 games and calculates the aggregate
 // performance of a summoner
 func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto, error) {
 	var matchList *riotapi.MatchListDto
 	var perf PerformanceDto
-	var numOfGames, wins, losses, discardedGames int
-	var totalKDA float64
+	var numOfGames, wins, losses, discardedGames, bossKills, enemyBossKills int
+	var totalKDA, bossKillsDelta float64
 
 	s, summonerErr := riotapi.GetSummoner(region, summonerName)
 	if summonerErr != nil {
@@ -93,10 +103,22 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 				} else {
 					losses++
 				}
+
+				// Aggregate jg boss secures
+				for _, team := range match.Teams {
+					if team.TeamID == summoner.TeamID {
+						bossKills += team.BaronKills + team.DragonKills
+					} else {
+						enemyBossKills += team.BaronKills + team.DragonKills
+					}
+				}
+				bossKillsDelta += calcBossKillDeltas(bossKills, enemyBossKills)
+
 			}
 		}
 		numOfGames = i + 1 - discardedGames
 	}
+	perf.setBossKillsDelta(bossKillsDelta, numOfGames)
 	perf.SummonerName = s.Name
 	perf.setKDA(totalKDA, numOfGames)
 	perf.setWinLoss(wins, losses)
