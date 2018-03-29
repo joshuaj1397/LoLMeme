@@ -105,15 +105,16 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 				}
 
 				// Aggregate jg boss secures
-				for _, team := range match.Teams {
-					if team.TeamID == summoner.TeamID {
-						bossKills += team.BaronKills + team.DragonKills
-					} else {
-						enemyBossKills += team.BaronKills + team.DragonKills
+				if summoner.Timeline.Lane == "JUNGLE" {
+					for _, team := range match.Teams {
+						if team.TeamID == summoner.TeamID {
+							bossKills += team.BaronKills + team.DragonKills
+						} else {
+							enemyBossKills += team.BaronKills + team.DragonKills
+						}
 					}
+					bossKillsDelta += calcBossKillDeltas(bossKills, enemyBossKills)
 				}
-				bossKillsDelta += calcBossKillDeltas(bossKills, enemyBossKills)
-
 			}
 		}
 		numOfGames = i + 1 - discardedGames
