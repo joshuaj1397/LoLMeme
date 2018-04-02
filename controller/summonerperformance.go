@@ -16,8 +16,8 @@ type PerformanceDto struct {
 	KDA                   float64 // [x] Kill-Death-Assist ratio
 	WinLoss               float64 // [x] Win-Loss ratio
 	CS                    int32   // Average Creep Score
-	BossKillsJg           float64 // Average neutral boss kills as a jg
-	VisionScoreSupp       int32   // Vision Score as a support
+	BossKillsJg           float64 // [x] Average neutral boss kills as a jg
+	VisionScoreSuppDelta  float64 // [x] Vision Score delta as a support
 	SelfMitigatedDmgTank  int32   // Self Mitigated Damage as a tank
 	MagicDmgMage          int32   // Magic Damage as a mage
 	PhysicalDmgAdc        int32   // Physical Damage as an AD carry
@@ -41,6 +41,10 @@ func calcBossKillDeltas(bossKills, enemyBossKills int) float64 {
 	return math.Abs(float64(bossKills - enemyBossKills))
 }
 
+func calcVisionScoreDelta(visionScore, enemyVisionScore int64) float64 {
+	return math.Abs(float64(visionScore - enemyVisionScore))
+}
+
 // TODO: Dry this function
 // GetRecentPerformance gets the last 20 games and calculates the aggregate
 // performance of a summoner
@@ -48,6 +52,7 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 	var matchList *riotapi.MatchListDto
 	var perf PerformanceDto
 	var numOfGames, wins, losses, discardedGames, bossKills, enemyBossKills int
+	var visionScore int64
 	var totalKDA, bossKillsDelta float64
 
 	s, summonerErr := riotapi.GetSummoner(region, summonerName)
@@ -114,6 +119,11 @@ func GetRecentPerformance(region *string, summonerName string) (*PerformanceDto,
 						}
 					}
 					bossKillsDelta += calcBossKillDeltas(bossKills, enemyBossKills)
+				}
+
+				// Aggregate supp vision score
+				if summoner.Timeline.Lane == "BOTTOM" && summoner.Timeline.Role == "DUO_SUPPORT" {
+					visionScore += summoner.Stats.VisionScore
 				}
 			}
 		}
